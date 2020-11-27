@@ -7,6 +7,7 @@ const requestUrl = 'https://api.hgbrasil.com/finance?key=4746fa7f';
 void main() async {
   runApp(MaterialApp(
     home: Home(),
+    debugShowCheckedModeBanner: false,
     theme: ThemeData(
       hintColor: Colors.amber,
       primaryColor: Colors.white,
@@ -40,8 +41,51 @@ class Home extends StatefulWidget {
 }
 
 class _HomeState extends State<Home> {
-  double dolar;
-  double euro;
+  final brlController = TextEditingController();
+  final usdController = TextEditingController();
+  final eurController = TextEditingController();
+
+  double usd;
+  double eur;
+
+  void _brlOnChange(String text) {
+    if (text.isEmpty) {
+      _clearAll();
+      return;
+    }
+
+    double brl = double.parse(text);
+    usdController.text = (brl / usd).toStringAsFixed(2);
+    eurController.text = (brl / eur).toStringAsFixed(2);
+  }
+
+  void _usdOnChange(String text) {
+    if (text.isEmpty) {
+      _clearAll();
+      return;
+    }
+
+    double usd = double.parse(text);
+    brlController.text = (usd * this.usd).toStringAsFixed(2);
+    eurController.text = (usd / eur).toStringAsFixed(2);
+  }
+
+  void _eurOnChange(String text) {
+    if (text.isEmpty) {
+      _clearAll();
+      return;
+    }
+
+    double eur = double.parse(text);
+    brlController.text = (eur * this.eur).toStringAsFixed(2);
+    eurController.text = (eur + this.eur / usd).toStringAsFixed(2);
+  }
+
+  void _clearAll() {
+    brlController.text = "";
+    usdController.text = "";
+    eurController.text = "";
+  }
 
   @override
   Widget build(BuildContext context) {
@@ -74,8 +118,8 @@ class _HomeState extends State<Home> {
                         )),
                   );
                 } else {
-                  dolar = snapshot.data['results']['currencies']['USD']['buy'];
-                  euro = snapshot.data['results']['currencies']['EUR']['buy'];
+                  usd = snapshot.data['results']['currencies']['USD']['buy'];
+                  eur = snapshot.data['results']['currencies']['EUR']['buy'];
 
                   return SingleChildScrollView(
                     padding: EdgeInsets.all(8.0),
@@ -87,50 +131,14 @@ class _HomeState extends State<Home> {
                           size: 150.0,
                           color: Colors.amber,
                         ),
-                        TextField(
-                          decoration: InputDecoration(
-                            labelText: 'Reais',
-                            labelStyle: TextStyle(
-                              color: Colors.amber,
-                            ),
-                            border: OutlineInputBorder(),
-                            prefixText: 'R\$ ',
-                          ),
-                          style: TextStyle(
-                            color: Colors.amber,
-                            fontSize: 25.0,
-                          ),
-                        ),
+                        buildTextField(
+                            'Reais', 'R\$ ', brlController, _brlOnChange),
                         Divider(),
-                        TextField(
-                          decoration: InputDecoration(
-                            labelText: 'Dólares',
-                            labelStyle: TextStyle(
-                              color: Colors.amber,
-                            ),
-                            border: OutlineInputBorder(),
-                            prefixText: 'R\$ ',
-                          ),
-                          style: TextStyle(
-                            color: Colors.amber,
-                            fontSize: 25.0,
-                          ),
-                        ),
+                        buildTextField(
+                            'Dólares', '\$ ', usdController, _usdOnChange),
                         Divider(),
-                        TextField(
-                          decoration: InputDecoration(
-                            labelText: 'Euros',
-                            labelStyle: TextStyle(
-                              color: Colors.amber,
-                            ),
-                            border: OutlineInputBorder(),
-                            prefixText: '€ ',
-                          ),
-                          style: TextStyle(
-                            color: Colors.amber,
-                            fontSize: 25.0,
-                          ),
-                        ),
+                        buildTextField(
+                            'Euros', '€ ', eurController, _eurOnChange),
                       ],
                     ),
                   );
@@ -139,4 +147,25 @@ class _HomeState extends State<Home> {
           },
         ));
   }
+}
+
+Widget buildTextField(String label, String prefix,
+    TextEditingController editingController, Function onChange) {
+  return TextField(
+    controller: editingController,
+    decoration: InputDecoration(
+      labelText: label,
+      labelStyle: TextStyle(
+        color: Colors.amber,
+      ),
+      border: OutlineInputBorder(),
+      prefixText: prefix,
+    ),
+    style: TextStyle(
+      color: Colors.amber,
+      fontSize: 25.0,
+    ),
+    onChanged: onChange,
+    keyboardType: TextInputType.numberWithOptions(decimal: true),
+  );
 }
